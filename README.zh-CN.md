@@ -1,5 +1,11 @@
 # Prompt Optimizer (提示词优化器) 🚀
 
+> **非官方修改版 · 2026-11-25**
+>
+> `feizhiliu` 在此分支加入了多图拖拽上传、面向兼容模型接口的视频直传，以及桌面端附件分析。本修改版基于 [上游 Prompt Optimizer v2.17.0-beta.4](https://github.com/linshenkx/prompt-optimizer/tree/v2.17.0-beta.4)。
+>
+> 原有版权声明继续适用。本修改版依照 [GNU Affero 通用公共许可证第 3 版（仅此版本）](LICENSE) 发布。
+
 <div align="center">
 
 [English](README.md) | 中文

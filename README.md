@@ -1,5 +1,11 @@
 # Prompt Optimizer 🚀
 
+> **Unofficial modified version · 2026-11-25**
+>
+> In this fork, `feizhiliu` added multi-image drag-and-drop uploads, direct video input for compatible model endpoints, and desktop attachment analysis. This version is based on [upstream Prompt Optimizer v2.17.0-beta.4](https://github.com/linshenkx/prompt-optimizer/tree/v2.17.0-beta.4).
+>
+> The original copyright notices apply. This modified version is distributed under the [GNU Affero General Public License v3.0 only](LICENSE).
+
 <div align="center">
 
 English | [中文](README.zh-CN.md)
