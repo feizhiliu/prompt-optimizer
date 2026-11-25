@@ -1,5 +1,50 @@
 export default {
   "workspace": {
+    "attachmentAnalysis": {
+      "dropImages": "拖入或点击多选图片",
+      "imageImportFailed": "导入图片失败",
+      "direct": "视频直传",
+      "general": "智能体附件",
+      "destination": "发送至 {host}",
+      "directUnavailable": "请选择使用 Chat Completions 接口且支持视频输入的兼容模型。",
+      "confirmVideo": "我确认所选服务和模型支持 video_url 视频输入",
+      "dropVideo": "拖入一个视频，或点击选择 · 最大 32 MB",
+      "dropFiles": "拖入或点击选择文档、图片、视频或字幕",
+      "remove": "移除",
+      "speechOnly": "仅分析字幕或对白",
+      "includeSpeech": "同时分析字幕或对白",
+      "cloudTranscription": "无字幕时，将提取的音轨发给 OpenAI 转写",
+      "start": "开始秒数（选填）",
+      "end": "结束秒数（选填）",
+      "preserveLayout": "保留 Word 插图和排版（需 LibreOffice）",
+      "question": "想分析什么？例如：结合品牌规范反推这段视频的提示词。",
+      "invalidRange": "请填写开始和结束时间，结束时间须大于开始时间。",
+      "processing": "正在处理",
+      "submit": "开始分析",
+      "failed": "附件分析失败",
+      "unsupportedFile": "此入口不支持所选文件格式。",
+      "fileCount": "最多可添加 {count} 个附件。",
+      "useResult": "替换当前输入提示词",
+      "sampled": "{frames} 张画面 · {source} · {scope}",
+      "kind": {
+        "direct": "发送原视频",
+        "image": "发送图片",
+        "pages": "发送 PDF 正文与页面",
+        "nativeText": "发送文档供接口提取文字",
+        "text": "提取文字"
+      },
+      "speech": {
+        "none": "无对白材料",
+        "sidecar": "附带字幕文件",
+        "subtitles": "内嵌字幕",
+        "transcription": "语音转写"
+      },
+      "plan": {
+        "frames": "本地抽帧",
+        "framesSpeech": "本地抽帧并读取对白材料",
+        "speech": "仅发送字幕或转写"
+      }
+    },
     "viewFullPrompt": "查看全文",
     "helpAbout": "帮助与关于",
     "systemMode": "系统提示词",

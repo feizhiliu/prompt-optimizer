@@ -1,5 +1,50 @@
 export default {
   "workspace": {
+    "attachmentAnalysis": {
+      "dropImages": "拖入或點擊多選圖片",
+      "imageImportFailed": "無法匯入圖片",
+      "direct": "影片直傳",
+      "general": "代理附件",
+      "destination": "傳送至 {host}",
+      "directUnavailable": "請選擇使用 Chat Completions 介面且支援影片輸入的相容模型。",
+      "confirmVideo": "我確認所選服務和模型支援 video_url 影片輸入",
+      "dropVideo": "拖入一部影片，或點擊選擇 · 最大 32 MB",
+      "dropFiles": "拖入或點擊選擇文件、圖片、影片或字幕",
+      "remove": "移除",
+      "speechOnly": "僅分析字幕或對白",
+      "includeSpeech": "同時分析字幕或對白",
+      "cloudTranscription": "沒有字幕時，將提取的音軌傳送至 OpenAI 轉錄",
+      "start": "開始秒數（選填）",
+      "end": "結束秒數（選填）",
+      "preserveLayout": "保留 Word 插圖和版面（需 LibreOffice）",
+      "question": "想分析什麼？",
+      "invalidRange": "請填寫開始和結束時間，結束時間須大於開始時間。",
+      "processing": "正在處理",
+      "submit": "開始分析",
+      "failed": "附件分析失敗",
+      "unsupportedFile": "此入口不支援所選檔案格式。",
+      "fileCount": "最多可新增 {count} 個附件。",
+      "useResult": "取代目前輸入的提示詞",
+      "sampled": "{frames} 張畫面 · {source} · {scope}",
+      "kind": {
+        "direct": "傳送原始影片",
+        "image": "傳送圖片",
+        "pages": "傳送 PDF 文字與頁面",
+        "nativeText": "傳送文件供介面擷取文字",
+        "text": "擷取文字"
+      },
+      "speech": {
+        "none": "無對白資料",
+        "sidecar": "附加字幕檔",
+        "subtitles": "內嵌字幕",
+        "transcription": "語音轉錄"
+      },
+      "plan": {
+        "frames": "在本機擷取影格",
+        "framesSpeech": "在本機擷取影格並加入對白",
+        "speech": "僅傳送字幕或逐字稿"
+      }
+    },
     "viewFullPrompt": "查看全文",
     "helpAbout": "說明與關於",
     "systemMode": "系統提示詞",

@@ -57,6 +57,7 @@ const { createGlobalDispatcherFromProxyDecision } = require('./config/proxy-disp
 const { NetworkSettingsStore } = require('./config/network-settings');
 const { ModelNetworkDispatcher } = require('./config/model-network');
 const { discoverDesktopLocalServices, fetchDesktopLocalServiceModels } = require('./config/local-discovery');
+const { createAttachmentAnalysis } = require('./config/attachment-analysis');
 const {
   buildAppMenuTemplate,
   getPageZoomShortcutAction,
@@ -139,6 +140,10 @@ let modelNetwork;
 let networkRestarting = false;
 let modelManager, templateManager, historyManager, llmService, promptService, templateLanguageService, preferenceService, dataManager, contextRepo, favoriteManager;
 let imageModelManager, imageService, imageUnderstandingService;
+const attachmentAnalysis = createAttachmentAnalysis({
+  getModel: key => modelManager.getModel(key),
+  understandImages: request => imageUnderstandingService.understand(request),
+});
 let savedComparisons, desktopRuns, runArchive;
 let imageAdapterRegistry; // 全局引用以供 IPC 处理器使用
 let storageProvider; // 全局存储提供器引用，用于退出时保存数据
@@ -1026,6 +1031,28 @@ function setupIPC() {
     try {
       const result = await imageUnderstandingService.understand(safeSerialize(request));
       return createSuccessResponse(result);
+    } catch (error) {
+      return createErrorResponse(error);
+    }
+  }));
+
+  ipcMain.handle('attachment-analysis-inspect', async (event, key) => {
+    try {
+      if (event.sender !== mainWindow?.webContents || event.senderFrame !== event.sender.mainFrame) {
+        throw new Error('Attachment analysis is available only in the main workspace.');
+      }
+      return createSuccessResponse(await attachmentAnalysis.inspect(key));
+    } catch (error) {
+      return createErrorResponse(error);
+    }
+  });
+
+  ipcMain.handle('attachment-analysis-run', withModelNetwork(async (event, options, files) => {
+    try {
+      if (event.sender !== mainWindow?.webContents || event.senderFrame !== event.sender.mainFrame) {
+        throw new Error('Attachment analysis is available only in the main workspace.');
+      }
+      return createSuccessResponse(await attachmentAnalysis.analyze(event.sender.id, options, files));
     } catch (error) {
       return createErrorResponse(error);
     }

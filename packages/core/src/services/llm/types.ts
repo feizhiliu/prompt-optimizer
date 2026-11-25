@@ -139,6 +139,12 @@ export interface ImageUnderstandingRequest {
   responseMimeType?: string;
 }
 
+export type AttachmentAnalysisPart =
+  | { type: 'text'; text: string }
+  | { type: 'image'; b64: string; mimeType: string }
+  | { type: 'file'; b64: string; mimeType: string; filename: string }
+  | { type: 'video'; b64: string; mimeType: string }
+
 /** Provider token counts. A null value indicates an unreported or invalid count. */
 export interface LLMTokenUsage {
   inputTokens: number | null;

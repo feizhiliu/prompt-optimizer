@@ -116,6 +116,33 @@ describe('OpenAIAdapter', () => {
     };
   });
 
+  it('sends a native PDF and picture together to the Responses API', async () => {
+    mockOpenAIInstance.responses.create.mockResolvedValue({ output_text: 'Attachment answer' });
+    const config = { ...mockConfig, connectionConfig: { ...mockConfig.connectionConfig, requestStyle: 'responses' } };
+    await expect(adapter.sendAttachmentAnalysis([
+      { type: 'text', text: 'Compare the brand guide with frame 1.' },
+      { type: 'file', mimeType: 'application/pdf', filename: 'guide.pdf', b64: 'cGRm' },
+      { type: 'image', mimeType: 'image/jpeg', b64: 'ZnJhbWU=' },
+    ], config)).resolves.toMatchObject({ content: 'Attachment answer' });
+    expect(mockOpenAIInstance.responses.create).toHaveBeenCalledWith({
+      model: config.modelMeta.id,
+      store: false,
+      input: [{ role: 'user', content: [
+        { type: 'input_text', text: 'Compare the brand guide with frame 1.' },
+        { type: 'input_file', filename: 'guide.pdf', file_data: 'data:application/pdf;base64,cGRm' },
+        { type: 'input_image', image_url: 'data:image/jpeg;base64,ZnJhbWU=' },
+      ] }],
+    });
+  });
+
+  it('rejects video data before a request can reach the official GPT API', async () => {
+    await expect(adapter.sendAttachmentAnalysis([
+      { type: 'video', mimeType: 'video/mp4', b64: 'dmlkZW8=' },
+    ], mockConfig)).rejects.toThrow('compatible Chat Completions');
+    expect(mockOpenAIInstance.chat.completions.create).not.toHaveBeenCalled();
+    expect(mockOpenAIInstance.responses.create).not.toHaveBeenCalled();
+  });
+
   describe('getProvider', () => {
     it('should return OpenAI provider metadata', () => {
       const provider = adapter.getProvider();

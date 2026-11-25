@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 // IPC事件名称常量 - 直接内联避免沙箱环境的模块加载问题
 const IPC_EVENTS = {
@@ -101,6 +101,15 @@ ipcRenderer.on('workspace-save-request', async (_event, requestId) => {
 });
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  attachmentAnalysis: {
+    inspect: key => invokeFavorite('attachment-analysis-inspect', key),
+    analyze: (options, files) => {
+      if (!Array.isArray(files) || files.length > 6) throw new Error('Select up to six attachments.');
+      const paths = files.map(file => webUtils.getPathForFile(file));
+      if (paths.some(path => !path)) throw new Error('Select local files through the file picker or drop area.');
+      return invokeFavorite('attachment-analysis-run', options, paths);
+    },
+  },
   desktopResources: {
     register: () => ipcRenderer.invoke('desktop-resources-register'),
     complete: packet => ipcRenderer.invoke('desktop-resources-complete', packet),

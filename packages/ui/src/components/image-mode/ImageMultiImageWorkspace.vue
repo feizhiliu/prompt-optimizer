@@ -133,7 +133,13 @@
                   @change="handleFilesSelected"
                 />
 
-                <div class="image-card-list" data-testid="image-multiimage-card-list">
+                <div
+                  class="image-card-list"
+                  data-testid="image-multiimage-card-list"
+                  @dragover="handleFileDragOver"
+                  @dragleave="handleFileDragLeave"
+                  @drop="handleFileDrop"
+                >
                   <div
                     v-for="(item, index) in session.inputImages"
                     :key="item.id"
@@ -205,11 +211,17 @@
                     @drop.prevent="handleUploadCardDrop"
                   >
                     <UiImagePlus class="image-upload-card__icon" :size="24" aria-hidden="true" />
-                    <span class="image-upload-card__text">{{ t("imageWorkspace.input.selectImage") }}</span>
+                    <span class="image-upload-card__text">{{ t('workspace.attachmentAnalysis.dropImages') }}</span>
                   </button>
                 </div>
 
                 <NText depth="3">{{ imageInputHint }}</NText>
+                <AttachmentAnalysisControl
+                  v-if="desktopAttachmentAnalysisAvailable"
+                  :model-options="textModelOptions"
+                  :initial-model="selectedTextModelKey"
+                  @use-result="handleOriginalPromptInput"
+                />
               </NSpace>
 
               <OptimizationControls :compact="isCompact">
@@ -641,6 +653,7 @@ import TextModelSelector from '../TextModelSelector.vue'
 import TestSourceLinkedCard from '../TestSourceLinkedCard.vue'
 import FullscreenDialog from '../FullscreenDialog.vue'
 import AppPreviewImage from '../media/AppPreviewImage.vue'
+import AttachmentAnalysisControl from './AttachmentAnalysisControl.vue'
 import { VariableAwareInput } from '../variable-extraction'
 import TemporaryVariablesPanel from '../variable/TemporaryVariablesPanel.vue'
 import WorkspaceUtilityMenu from '../common/WorkspaceUtilityMenu.vue'
@@ -652,6 +665,7 @@ import SaveTestResultExamplesBatchButton from '../SaveTestResultExamplesBatchBut
 import { EvaluationPanel } from '../evaluation'
 
 const { t } = useI18n()
+const desktopAttachmentAnalysisAvailable = typeof window !== 'undefined' && !!window.electronAPI?.attachmentAnalysis
 const toast = useToast()
 const { prepareInputRefs: prepareImageInputRefs } = useImageInputPreparation()
 const services = inject<Ref<AppServices | null>>('services', ref(null))
@@ -1227,23 +1241,46 @@ const toDataUrl = (item: Pick<ImageInputRef, 'b64' | 'mimeType'>) => `data:${ite
 const draggingImageIndex = ref<number | null>(null)
 const dragOverImageIndex = ref<number | null>(null)
 const dragOverUploadCard = ref(false)
+let imageImportQueue = Promise.resolve()
 
 const triggerUpload = () => fileInputRef.value?.click()
 
-const handleFilesSelected = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const files = Array.from(input.files || [])
-  if (files.length === 0) return
-  try {
+const importImageFiles = (files: File[]) => {
+  if (!files.length) return
+  imageImportQueue = imageImportQueue.then(async () => {
     const payloads = await prepareImageInputRefs(files)
     if (!payloads) return
     for (const payload of payloads) {
       await session.addInputImage(payload)
     }
     await session.saveSession()
-  } finally {
-    input.value = ''
-  }
+  }).catch((error) => { toast.error(getI18nErrorMessage(error, t('workspace.attachmentAnalysis.imageImportFailed'))) })
+}
+
+const handleFilesSelected = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  importImageFiles(Array.from(input.files || []))
+  input.value = ''
+}
+
+const handleFileDragOver = (event: DragEvent) => {
+  if (!event.dataTransfer?.types.includes('Files')) return
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'copy'
+  dragOverUploadCard.value = true
+}
+
+const handleFileDragLeave = (event: DragEvent) => {
+  if (draggingImageIndex.value !== null) return
+  if (event.relatedTarget instanceof Node && (event.currentTarget as HTMLElement).contains(event.relatedTarget)) return
+  dragOverUploadCard.value = false
+}
+
+const handleFileDrop = (event: DragEvent) => {
+  if (!event.dataTransfer?.types.includes('Files')) return
+  event.preventDefault()
+  resetDragState()
+  importImageFiles(Array.from(event.dataTransfer.files))
 }
 
 const resetDragState = () => {

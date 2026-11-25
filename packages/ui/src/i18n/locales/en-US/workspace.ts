@@ -1,5 +1,50 @@
 export default {
   "workspace": {
+    "attachmentAnalysis": {
+      "dropImages": "Drop images or click to select",
+      "imageImportFailed": "Could not import images",
+      "direct": "Direct video",
+      "general": "Agent attachments",
+      "destination": "Sending to {host}",
+      "directUnavailable": "Select a compatible model and Chat Completions endpoint that accept video input.",
+      "confirmVideo": "I confirm this service and model accept video_url input",
+      "dropVideo": "Drop or select one video · 32 MB max",
+      "dropFiles": "Drop or select documents, images, videos, or subtitles",
+      "remove": "Remove",
+      "speechOnly": "Analyze subtitles or dialogue only",
+      "includeSpeech": "Include subtitles or dialogue",
+      "cloudTranscription": "Send extracted audio to OpenAI for transcription when subtitles are unavailable",
+      "start": "Start seconds (optional)",
+      "end": "End seconds (optional)",
+      "preserveLayout": "Preserve Word images and layout (requires LibreOffice)",
+      "question": "What should the model analyze?",
+      "invalidRange": "Enter a start and end time. The end must be after the start.",
+      "processing": "Processing",
+      "submit": "Analyze",
+      "failed": "Attachment analysis failed",
+      "unsupportedFile": "This entry does not support the selected file format.",
+      "fileCount": "You can attach up to {count} files.",
+      "useResult": "Replace the current input prompt",
+      "sampled": "{frames} frames · {source} · {scope}",
+      "kind": {
+        "direct": "Send original video",
+        "image": "Send image",
+        "pages": "Send PDF text and pages",
+        "nativeText": "Send document for API text extraction",
+        "text": "Extract text"
+      },
+      "speech": {
+        "none": "No dialogue evidence",
+        "sidecar": "Attached subtitles",
+        "subtitles": "Embedded subtitles",
+        "transcription": "Transcribed audio"
+      },
+      "plan": {
+        "frames": "Extract frames locally",
+        "framesSpeech": "Extract frames locally and include dialogue",
+        "speech": "Send only subtitles or transcript"
+      }
+    },
     "viewFullPrompt": "View full prompt",
     "helpAbout": "Help & about",
     "systemMode": "System prompt",

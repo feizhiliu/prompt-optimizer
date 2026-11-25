@@ -1,4 +1,4 @@
-import OpenAI from 'openai'
+import OpenAI, { toFile } from 'openai'
 import { AbstractTextProviderAdapter } from './abstract-adapter'
 import { APIError, RequestConfigError } from '../errors'
 import { projectTextRequestEvidence } from '../request-evidence'
@@ -10,6 +10,7 @@ import type {
   TextModelConfig,
   Message,
   ImageUnderstandingRequest,
+  AttachmentAnalysisPart,
   LLMResponse,
   LLMTokenUsage,
   StreamHandlers,
@@ -381,6 +382,10 @@ export class OpenAIAdapter extends AbstractTextProviderAdapter {
       return false
     }
 
+    return this.isOfficialEndpoint(config)
+  }
+
+  private isOfficialEndpoint(config: TextModelConfig): boolean {
     const providerId = config.providerMeta?.id || this.getProvider().id
     if (this.getProvider().id !== 'openai' || providerId !== 'openai') {
       return false
@@ -396,6 +401,67 @@ export class OpenAIAdapter extends AbstractTextProviderAdapter {
     } catch {
       return false
     }
+  }
+
+  public getAttachmentCapabilities(config: TextModelConfig) {
+    const official = this.isOfficialEndpoint(config)
+    const responses = this.getRequestStyle(config) === 'responses'
+    return {
+      documents: official ? (responses ? 'all' : 'pdf') : 'none',
+      video: this.getProvider().id === 'openai-compatible' && !responses,
+      transcription: official,
+    } as const
+  }
+
+  public async transcribeAttachment(audio: Uint8Array, config: TextModelConfig): Promise<string> {
+    if (!this.getAttachmentCapabilities(config).transcription) {
+      throw new RequestConfigError('Transcription requires an official OpenAI endpoint')
+    }
+    const client = this.createOpenAIInstance(config, false)
+    const file = await toFile(audio, 'audio.mp3', { type: 'audio/mpeg' })
+    return (await client.audio.transcriptions.create({ file, model: 'gpt-transcribe' })).text
+  }
+
+  public async sendAttachmentAnalysis(parts: AttachmentAnalysisPart[], config: TextModelConfig): Promise<LLMResponse> {
+    const capabilities = this.getAttachmentCapabilities(config)
+    if (parts.some(part => part.type === 'video') && !capabilities.video) {
+      throw new RequestConfigError('Video upload requires a compatible Chat Completions endpoint')
+    }
+    if (parts.some(part => part.type === 'file' && (capabilities.documents === 'none' ||
+        (capabilities.documents === 'pdf' && part.mimeType !== 'application/pdf')))) {
+      throw new RequestConfigError('This endpoint does not support the attached document type')
+    }
+
+    const client = this.createOpenAIInstance(config, false)
+    const dataUrl = (part: { mimeType: string; b64: string }) => `data:${part.mimeType};base64,${part.b64}`
+    if (this.getRequestStyle(config) === 'responses') {
+      const content = parts.map(part => {
+        switch (part.type) {
+          case 'text': return { type: 'input_text', text: part.text }
+          case 'image': return { type: 'input_image', image_url: dataUrl(part) }
+          case 'file': return { type: 'input_file', file_data: dataUrl(part), filename: part.filename }
+          case 'video': throw new RequestConfigError('Video input is unavailable on the Responses API')
+        }
+      })
+      return this.sendResponsesMessage(client, [], config, [{ role: 'user', content }], {
+        ...config.paramOverrides,
+        store: false,
+      })
+    }
+
+    const content = parts.map(part => {
+      switch (part.type) {
+        case 'text': return { type: 'text', text: part.text }
+        case 'image': return { type: 'image_url', image_url: { url: dataUrl(part) } }
+        case 'file': return { type: 'file', file: { filename: part.filename, file_data: dataUrl(part) } }
+        case 'video': return { type: 'video_url', video_url: { url: dataUrl(part) } }
+      }
+    })
+    const { timeout, model, messages, stream, ...parameters } = config.paramOverrides ?? {}
+    // video_url is a provider extension, so it is intentionally passed through the OpenAI SDK.
+    const request = { ...parameters, model: config.modelMeta.id, messages: [{ role: 'user', content }] }
+    const response = await client.chat.completions.create(request as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming)
+    return this.parseCompletionResponse(response, config.modelMeta.id)
   }
 
   private supportsStreamRequestEvidence(): boolean {
