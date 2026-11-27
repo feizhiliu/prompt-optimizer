@@ -135,7 +135,9 @@
 
                 <div
                   class="image-card-list"
+                  :class="{ 'image-card-list--file-drop': fileDropActive }"
                   data-testid="image-multiimage-card-list"
+                  @dragenter="handleFileDragEnter"
                   @dragover="handleFileDragOver"
                   @dragleave="handleFileDragLeave"
                   @drop="handleFileDrop"
@@ -211,8 +213,18 @@
                     @drop.prevent="handleUploadCardDrop"
                   >
                     <UiImagePlus class="image-upload-card__icon" :size="24" aria-hidden="true" />
-                    <span class="image-upload-card__text">{{ t('workspace.attachmentAnalysis.dropImages') }}</span>
+                    <span class="image-upload-card__text">{{ t('imageWorkspace.input.dropOrSelectImages') }}</span>
                   </button>
+
+                  <div
+                    v-if="fileDropActive"
+                    class="image-card-list__drop-overlay"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <UiImagePlus :size="28" aria-hidden="true" />
+                    <span>{{ t('imageWorkspace.input.releaseToAddImages') }}</span>
+                  </div>
                 </div>
 
                 <NText depth="3">{{ imageInputHint }}</NText>
@@ -1241,6 +1253,7 @@ const toDataUrl = (item: Pick<ImageInputRef, 'b64' | 'mimeType'>) => `data:${ite
 const draggingImageIndex = ref<number | null>(null)
 const dragOverImageIndex = ref<number | null>(null)
 const dragOverUploadCard = ref(false)
+const fileDropActive = ref(false)
 let imageImportQueue = Promise.resolve()
 
 const triggerUpload = () => fileInputRef.value?.click()
@@ -1263,30 +1276,40 @@ const handleFilesSelected = (event: Event) => {
   input.value = ''
 }
 
-const handleFileDragOver = (event: DragEvent) => {
-  if (!event.dataTransfer?.types.includes('Files')) return
+const isFileDrag = (event: DragEvent) => event.dataTransfer?.types.includes('Files') === true
+
+const handleFileDragEnter = (event: DragEvent) => {
+  if (!isFileDrag(event)) return
   event.preventDefault()
-  event.dataTransfer.dropEffect = 'copy'
-  dragOverUploadCard.value = true
+  fileDropActive.value = true
+}
+
+const handleFileDragOver = (event: DragEvent) => {
+  if (!isFileDrag(event)) return
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+  fileDropActive.value = true
 }
 
 const handleFileDragLeave = (event: DragEvent) => {
-  if (draggingImageIndex.value !== null) return
-  if (event.relatedTarget instanceof Node && (event.currentTarget as HTMLElement).contains(event.relatedTarget)) return
-  dragOverUploadCard.value = false
+  if (!isFileDrag(event)) return
+  const container = event.currentTarget as HTMLElement
+  if (event.relatedTarget instanceof Node && container.contains(event.relatedTarget)) return
+  fileDropActive.value = false
 }
 
 const handleFileDrop = (event: DragEvent) => {
-  if (!event.dataTransfer?.types.includes('Files')) return
+  if (!isFileDrag(event)) return
   event.preventDefault()
   resetDragState()
-  importImageFiles(Array.from(event.dataTransfer.files))
+  importImageFiles(Array.from(event.dataTransfer?.files || []))
 }
 
 const resetDragState = () => {
   draggingImageIndex.value = null
   dragOverImageIndex.value = null
   dragOverUploadCard.value = false
+  fileDropActive.value = false
 }
 
 const removeImage = async (id: string) => {
@@ -1996,7 +2019,9 @@ defineExpose({
 .image-multiimage-split { display: grid; gap: 12px; height: 100%; min-height: 0; overflow: hidden; }
 .split-pane { min-height: 0; min-width: 0; overflow: hidden; }
 .hidden-input { display: none; }
-.image-card-list { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; overscroll-behavior-x: contain; overscroll-behavior-y: contain; touch-action: pan-y; }
+.image-card-list { position: relative; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; min-height: 140px; border-radius: 14px; overscroll-behavior-x: contain; overscroll-behavior-y: contain; touch-action: pan-y; }
+.image-card-list--file-drop { box-shadow: 0 0 0 2px var(--n-primary-color-suppl); }
+.image-card-list__drop-overlay { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 2px dashed var(--n-primary-color); border-radius: 14px; background: var(--n-color); color: var(--n-primary-color); font-size: 14px; font-weight: 500; pointer-events: none; }
 .image-card { display: flex; flex-direction: column; gap: 8px; width: 116px; padding: 8px; border: 1px solid var(--n-border-color); border-radius: 14px; background: var(--n-color); transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, opacity 0.18s ease; }
 .image-card:hover { border-color: var(--n-border-color-hover); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06); }
 .image-card--dragging { opacity: 0.68; transform: scale(0.98); }
