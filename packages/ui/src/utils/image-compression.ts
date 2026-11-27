@@ -8,6 +8,17 @@ export const DEFAULT_MAX_IMAGE_BYTES = DEFAULT_IMAGE_INPUT_POLICY.maxOutputBytes
 export const DEFAULT_MAX_SOURCE_IMAGE_BYTES = DEFAULT_IMAGE_INPUT_POLICY.maxSourceBytes
 export const DEFAULT_MAX_IMAGE_DIMENSION = DEFAULT_IMAGE_INPUT_POLICY.maxDimension
 
+export const estimateBase64DecodedBytes = (base64: string) => {
+  const normalized = base64.trim()
+  if (!normalized) return 0
+  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0
+  return Math.max(0, Math.floor(normalized.length * 3 / 4) - padding)
+}
+
+export const estimateImageRequestBytes = (
+  images: readonly Pick<ImageInputRef, 'b64' | 'mimeType'>[],
+) => images.reduce((total, image) => total + image.b64.length + (image.mimeType?.length ?? 0) + 32, 0)
+
 const MATERIAL_DIMENSION_RATIO = 0.8
 const MATERIAL_JPEG_QUALITY = 0.8
 
@@ -297,6 +308,20 @@ export const fileToImageInputRef = async (file: File): Promise<ImageInputRef> =>
     b64: dataUrl.split(',', 2)[1] || '',
     mimeType: normalizeImageMimeType(file.type) || 'image/png',
   }
+}
+
+export const imageInputRefToFile = (
+  image: Pick<ImageInputRef, 'b64' | 'mimeType'>,
+  index = 0,
+): File => {
+  const mimeType = normalizeImageMimeType(image.mimeType) || 'image/png'
+  const binary = atob(image.b64)
+  const bytes = new Uint8Array(binary.length)
+  for (let offset = 0; offset < binary.length; offset += 1) {
+    bytes[offset] = binary.charCodeAt(offset)
+  }
+  const extension = mimeType === 'image/jpeg' ? 'jpg' : 'png'
+  return new File([bytes], `image-${index + 1}.${extension}`, { type: mimeType })
 }
 
 export const formatImageBytes = (bytes: number) => {
